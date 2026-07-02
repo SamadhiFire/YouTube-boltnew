@@ -1,0 +1,81 @@
+{
+  "profiles": {
+    "youtube-all": {
+      "description": "All YouTube sources",
+      "sources": [
+        {"id": "UCSej6W5W-4PDFsZBif0tYFw", "type": "channel", "category": "tech-ai-vc", "name": "Sequoia Capital"},
+        {"id": "UCz4St9qG3OAGseWpTwjH6KQ", "type": "channel", "category": "tech-ai-vc", "name": "No Priors Podcast"},
+        {"id": "PLOXw6I10VTv9GAOCZjUAAkSVyW2cDXs4u", "type": "playlist", "category": "tech-ai-vc", "name": "The OpenAI Podcast"},
+        {"id": "PLd7-bHaQwnthaNDpZ32TtYONGVk95-fhF", "type": "playlist", "category": "tech-ai-vc", "name": "Dwarkesh Podcast"},
+        {"id": "UCVYWDY9x8h4wQ7P57rBcnTA", "type": "channel", "category": "tech-ai-vc", "name": "Bg2 Pod"},
+
+        {"id": "UCUMZ7gohrM67iV2gcb6HV6w", "type": "channel", "category": "business-finance", "name": "Bloomberg Originals"},
+        {"id": "UCKMmL5ZahtbeB9dt2FqnZpg", "type": "channel", "category": "business-finance", "name": "Business Breakdowns"},
+        {"id": "UCB3qz3ZS5Ym5kMhJ7T5Q-0q", "type": "channel", "category": "business-finance", "name": "Invest Like The Best"},
+        {"id": "PLe4PRejZgr0NHEFdRxaup9ClCBvX335Xl", "type": "playlist", "category": "business-finance", "name": "Masters in Business"},
+        {"id": "PLe4PRejZgr0OJbRzA6nWybYiThLJd_ouz", "type": "playlist", "category": "business-finance", "name": "Odd Lots"},
+        {"id": "PLe4PRejZgr0MuA6M0zkZyy-99-qc87wKV", "type": "playlist", "category": "business-finance", "name": "Odd Lots Audio"},
+        {"id": "PLGaYlBJIOoa-qaI1saEniG3cR9V0Mu-PE", "type": "playlist", "category": "business-finance", "name": "Bloomberg Surveillance"},
+        {"id": "PLGaYlBJIOoa94hnb-z2i64eVPcGZPUvo9", "type": "playlist", "category": "business-finance", "name": "Bloomberg The China Show"},
+        {"id": "PLe4PRejZgr0PAxeoWOBGj6M7GXhXQmdn6", "type": "playlist", "category": "business-finance", "name": "Leaders with Francine Lacqua"},
+        {"id": "PLjZkFWu3rWSE2cZ8L2CbiRMmHtJeF0kHh", "type": "playlist", "category": "business-finance", "name": "Acquired Podcast Full Episodes"},
+        {"id": "PLjZkFWu3rWSEW_Dh8WQtVXkWphCocktxG", "type": "playlist", "category": "business-finance", "name": "ACQ2"},
+
+        {"id": "UCjS5j8YpRJ4rWMyPw-1S6yg", "type": "channel", "category": "product-startup", "name": "Lenny's Podcast"},
+        {"id": "UCqXKcHq9iS9sBnNKTSFVrVQ", "type": "channel", "category": "product-startup", "name": "The Knowledge Project Podcast"},
+        {"id": "PLQn7qZwwMmziZuTLRhYseP7Vg9TumF5dv", "type": "playlist", "category": "product-startup", "name": "Silicon Valley Girl Podcast"},
+
+        {"id": "UC_6LnzQz4Brq8rpk5G7G2mQ", "type": "channel", "category": "news-global", "name": "Interesting Times with Ross Douthat", "min_duration": 600},
+        {"id": "PLRNktCZa_EIJjZf5ZSbfUw8tKBLiPMTXk", "type": "playlist", "category": "news-global", "name": "WSJ Take On the Week"},
+        {"id": "PLRNktCZa_EIK9s9oKiKnwfxz-wqkY7-qI", "type": "playlist", "category": "news-global", "name": "WSJ Bold Names"},
+        {"id": "PLJI0LFwrJ8Kl8wRL8oqS32EagmpH2yorK", "type": "playlist", "category": "news-global", "name": "The Interview - New York Times"},
+        {"id": "PLdMrbgYfVl-s16D_iT2BJCJ90pWtTO1A4", "type": "playlist", "category": "news-global", "name": "The Daily"},
+        {"id": "PLe4PRejZgr0Ns_wjGlmjlPz0cded0nTYS", "type": "playlist", "category": "news-global", "name": "The Mishal Husain Show"},
+
+        {"id": "UCshZoyx6GEwR8mQXc4MlYrA", "type": "channel", "category": "culture-society", "name": "Lex Fridman", "min_duration": 1800},
+        {"id": "PL959yNJGO7n6ut_Lf717t4LFoswMxl7lL", "type": "playlist", "category": "culture-society", "name": "Cannonball with Wesley Morris"},
+        {"id": "PLwa5nQCz20BRS5qYQ_D2NNQIpdSvYCMUV", "type": "playlist", "category": "culture-society", "name": "Revisionist Glory"}
+      ]
+    },
+    "tech-ai-vc": {
+      "description": "Tech / AI / VC",
+      "sources": [
+        {"id": "UCSej6W5W-4PDFsZBif0tYFw", "type": "channel", "name": "Sequoia Capital"},
+        {"id": "UCz4St9qG3OAGseWpTwjH6KQ", "type": "channel", "name": "No Priors Podcast"},
+        {"id": "PLOXw6I10VTv9GAOCZjUAAkSVyW2cDXs4u", "type": "playlist", "name": "The OpenAI Podcast"},
+        {"id": "PLd7-bHaQwnthaNDpZ32TtYONGVk95-fhF", "type": "playlist", "name": "Dwarkesh Podcast"},
+        {"id": "UCVYWDY9x8h4wQ7P57rBcnTA", "type": "channel", "name": "Bg2 Pod"}
+      ]
+    },
+    "business-finance": {
+      "description": "Business / Finance / Investment",
+      "sources": [
+        {"id": "UCUMZ7gohrM67iV2gcb6HV6w", "type": "channel", "name": "Bloomberg Originals"},
+        {"id": "UCKMmL5ZahtbeB9dt2FqnZpg", "type": "channel", "name": "Business Breakdowns"},
+        {"id": "UCB3qz3ZS5Ym5kMhJ7T5Q-0q", "type": "channel", "name": "Invest Like The Best"},
+        {"id": "PLe4PRejZgr0NHEFdRxaup9ClCBvX335Xl", "type": "playlist", "name": "Masters in Business"},
+        {"id": "PLjZkFWu3rWSE2cZ8L2CbiRMmHtJeF0kHh", "type": "playlist", "name": "Acquired Podcast Full Episodes"}
+      ]
+    },
+    "news-global": {
+      "description": "News / Commentary / Global Issues",
+      "sources": [
+        {"id": "PLdMrbgYfVl-s16D_iT2BJCJ90pWtTO1A4", "type": "playlist", "name": "The Daily"},
+        {"id": "PLJI0LFwrJ8Kl8wRL8oqS32EagmpH2yorK", "type": "playlist", "name": "The Interview - New York Times"}
+      ]
+    },
+    "culture-society": {
+      "description": "Culture / Society / Humanities",
+      "sources": [
+        {"id": "UCshZoyx6GEwR8mQXc4MlYrA", "type": "channel", "name": "Lex Fridman", "min_duration": 1800}
+      ]
+    }
+  },
+  "categories": {
+    "tech-ai-vc": "科技 / AI / VC",
+    "business-finance": "商业 / 财经 / 投资",
+    "product-startup": "产品 / 创业 / 管理",
+    "news-global": "新闻 / 时评 / 全球议题",
+    "culture-society": "文化 / 社会 / 人文"
+  }
+}

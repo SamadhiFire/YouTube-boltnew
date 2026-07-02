@@ -1,0 +1,151 @@
+name: YouTube Transcript Collection
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Collection date (YYYY-MM-DD)'
+        required: false
+        default: ''
+      profile:
+        description: 'Sources profile (youtube-all, tech-ai-vc, business-finance, etc.)'
+        required: false
+        default: 'youtube-all'
+      run_asr:
+        description: 'Run ASR for videos without captions'
+        required: false
+        default: 'true'
+        type: boolean
+      model_size:
+        description: 'ASR model size (tiny, small, medium)'
+        required: false
+        default: 'small'
+        type: choice
+        options:
+          - tiny
+          - small
+          - medium
+
+env:
+  YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+  MEDIA_API_TOKEN: ${{ secrets.MEDIA_API_TOKEN }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+jobs:
+  daily-collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install yt-dlp requests
+
+      - name: Calculate time window
+        id: time-window
+        run: |
+          python -c "
+          from datetime import datetime, timedelta, timezone
+          import os
+
+          date_input = '${{ github.event.inputs.date }}' or None
+
+          if date_input:
+              collect_date = datetime.strptime(date_input, '%Y-%m-%d').date()
+          else:
+              collect_date = (datetime.now(timezone.utc).date() - timedelta(days=1))
+
+          window_start_dt = datetime.combine(collect_date, datetime.min.time(), tzinfo=timezone.utc).replace(hour=6)
+          window_start = window_start_dt.isoformat()
+          window_end_dt = window_start_dt + timedelta(days=1)
+          window_end = window_end_dt.isoformat()
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'date={collect_date}\\n')
+              f.write(f'window_start={window_start}\\n')
+              f.write(f'window_end={window_end}\\n')
+
+          print(f'Collection Date: {collect_date}')
+          print(f'Window Start: {window_start}')
+          print(f'Window End: {window_end}')
+          "
+
+      - name: Run daily collection
+        run: |
+          python scripts/collection_runner.py \
+            --date "${{ steps.time-window.outputs.date }}" \
+            --window-start "${{ steps.time-window.outputs.window_start }}" \
+            --window-end "${{ steps.time-window.outputs.window_end }}" \
+            --profile "${{ github.event.inputs.profile || 'youtube-all' }}" \
+            --run-asr "${{ github.event.inputs.run_asr || 'true' }}" \
+            --model-size "${{ github.event.inputs.model_size || 'small' }}" \
+            --output-dir output
+
+      - name: Create subtitles bundle
+        run: |
+          cd output
+          if [ -d subtitles ]; then
+            zip -r subtitles_bundle.zip subtitles/
+          fi
+          ls -la
+
+      - name: Upload all artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-collection-${{ steps.time-window.outputs.date }}
+          path: output/
+          retention-days: 30
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Daily Collection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** ${{ steps.time-window.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Profile:** ${{ github.event.inputs.profile || 'youtube-all' }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f output/manifest.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Statistics" >> $GITHUB_STEP_SUMMARY
+            cat output/manifest.json | python -c "
+              import sys, json
+              data = json.load(sys.stdin)
+              print(f'- Total videos found: {data.get(\"total_videos\", 0)}')
+              print(f'- Videos with transcripts: {data.get(\"videos_with_transcripts\", 0)}')
+              print(f'- Videos requiring ASR: {data.get(\"videos_needing_asr\", 0)}')
+              print(f'- Successfully processed: {data.get(\"processed\", 0)}')
+              print(f'- Failed: {data.get(\"failed\", 0)}')
+              if data.get('coverage_ratio'):
+                  print(f'- Overall coverage: {data[\"coverage_ratio\"]:.1%}')
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f output/daily_items.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Videos Collected" >> $GITHUB_STEP_SUMMARY
+            cat output/daily_items.json | python -c "
+              import sys, json
+              items = json.load(sys.stdin)
+              for item in items[:20]:  # Show first 20
+                  title = item.get('title', 'Unknown')[:60]
+                  print(f'- {title}...')
+
+              if len(items) > 20:
+                  print(f'... and {len(items) - 20} more')
+            " >> $GITHUB_STEP_SUMMARY
+          fi
