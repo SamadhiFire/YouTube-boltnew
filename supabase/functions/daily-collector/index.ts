@@ -14,21 +14,27 @@ const MEDIA_API_TOKEN = Deno.env.get("MEDIA_API_TOKEN") || "my-secret-token";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// YouTube sources matching config/sources_by_category.md
+// Videos shorter than this are treated as Shorts and dropped entirely.
+// YouTube Shorts are <= 60s originally, now up to 3 min; 120s is a safe cutoff
+// for all-podcast/interview sources where the shortest real episode is 10+ min.
+const SHORTS_MAX_SECONDS = 120;
+
+// YouTube sources — channel IDs verified 2026-07-03 via forHandle lookup.
+// Playlist IDs are stable and do not need periodic re-verification.
 const SOURCES_CONFIG: Record<string, { sources: any[] }> = {
   "youtube-default": {
     sources: [
       // Tech / AI / VC
-      { id: "UCSej6W5W-4PDFsZBif0tYFw", type: "channel", category: "科技 / AI / VC", name: "Sequoia Capital" },
-      { id: "UCz4St9qG3OAGseWpTwjH6KQ", type: "channel", category: "科技 / AI / VC", name: "No Priors Podcast" },
+      { id: "UCWrF0oN6unbXrWsTN7RctTw", type: "channel", category: "科技 / AI / VC", name: "Sequoia Capital" },
+      { id: "UCSI7h9hydQ40K5MJHnCrQvw", type: "channel", category: "科技 / AI / VC", name: "No Priors Podcast" },
       { id: "PLOXw6I10VTv9GAOCZjUAAkSVyW2cDXs4u", type: "playlist", category: "科技 / AI / VC", name: "The OpenAI Podcast" },
       { id: "PLd7-bHaQwnthaNDpZ32TtYONGVk95-fhF", type: "playlist", category: "科技 / AI / VC", name: "Dwarkesh Podcast" },
-      { id: "UCVYWDY9x8h4wQ7P57rBcnTA", type: "channel", category: "科技 / AI / VC", name: "Bg2 Pod" },
+      { id: "UC-yRDvpR99LUc5l7i7jLzew", type: "channel", category: "科技 / AI / VC", name: "Bg2 Pod" },
 
       // Business / Finance / Investment
-      { id: "UCUMZ7gohrM67iV2gcb6HV6w", type: "channel", category: "商业 / 财经 / 投资", name: "Bloomberg Originals" },
-      { id: "UCKMmL5ZahtbeB9dt2FqnZpg", type: "channel", category: "商业 / 财经 / 投资", name: "Business Breakdowns" },
-      { id: "UCB3qz3ZS5Ym5kMhJ7T5Q-0q", type: "channel", category: "商业 / 财经 / 投资", name: "Invest Like The Best" },
+      { id: "UCUMZ7gohGI9HcU9VNsr2FJQ", type: "channel", category: "商业 / 财经 / 投资", name: "Bloomberg Originals" },
+      { id: "UCfnHKTFEryHWyqr4Xjsjb3w", type: "channel", category: "商业 / 财经 / 投资", name: "Business Breakdowns" },
+      { id: "UCpQBb0fToph3jrDulwz1iUQ", type: "channel", category: "商业 / 财经 / 投资", name: "Invest Like The Best" },
       { id: "PLe4PRejZgr0NHEFdRxaup9ClCBvX335Xl", type: "playlist", category: "商业 / 财经 / 投资", name: "Masters in Business" },
       { id: "PLe4PRejZgr0OJbRzA6nWybYiThLJd_ouz", type: "playlist", category: "商业 / 财经 / 投资", name: "Odd Lots" },
       { id: "PLe4PRejZgr0MuA6M0zkZyy-99-qc87wKV", type: "playlist", category: "商业 / 财经 / 投资", name: "Odd Lots Audio" },
@@ -39,12 +45,12 @@ const SOURCES_CONFIG: Record<string, { sources: any[] }> = {
       { id: "PLjZkFWu3rWSEW_Dh8WQtVXkWphCocktxG", type: "playlist", category: "商业 / 财经 / 投资", name: "ACQ2" },
 
       // Product / Startup / Management
-      { id: "UCjS5j8YpRJ4rWMyPw-1S6yg", type: "channel", category: "产品 / 创业 / 管理", name: "Lenny's Podcast" },
-      { id: "UCqXKcHq9iS9sBnNKTSFVrVQ", type: "channel", category: "产品 / 创业 / 管理", name: "The Knowledge Project Podcast" },
+      { id: "UC6t1O76G0jYXOAoYCm153dA", type: "channel", category: "产品 / 创业 / 管理", name: "Lenny's Podcast" },
+      { id: "UCLtTf_uKt0Itd0NG7txrwXA", type: "channel", category: "产品 / 创业 / 管理", name: "The Knowledge Project Podcast" },
       { id: "PLQn7qZwwMmziZuTLRhYseP7Vg9TumF5dv", type: "playlist", category: "产品 / 创业 / 管理", name: "Silicon Valley Girl Podcast" },
 
       // News / Global Issues
-      { id: "UC_6LnzQz4Brq8rpk5G7G2mQ", type: "channel", category: "新闻 / 时评 / 全球议题", name: "Interesting Times with Ross Douthat", min_duration: 600 },
+      { id: "UCJugC7hlL5uNoii46ICyUvw", type: "channel", category: "新闻 / 时评 / 全球议题", name: "Interesting Times with Ross Douthat", min_duration: 600 },
       { id: "PLRNktCZa_EIJjZf5ZSbfUw8tKBLiPMTXk", type: "playlist", category: "新闻 / 时评 / 全球议题", name: "WSJ Take On the Week" },
       { id: "PLRNktCZa_EIK9s9oKiKnwfxz-wqkY7-qI", type: "playlist", category: "新闻 / 时评 / 全球议题", name: "WSJ Bold Names" },
       { id: "PLJI0LFwrJ8Kl8wRL8oqS32EagmpH2yorK", type: "playlist", category: "新闻 / 时评 / 全球议题", name: "The Interview - New York Times" },
@@ -52,24 +58,24 @@ const SOURCES_CONFIG: Record<string, { sources: any[] }> = {
       { id: "PLe4PRejZgr0Ns_wjGlmjlPz0cded0nTYS", type: "playlist", category: "新闻 / 时评 / 全球议题", name: "The Mishal Husain Show" },
 
       // Culture / Society / Humanities
-      { id: "UCshZoyx6GEwR8mQXc4MlYrA", type: "channel", category: "文化 / 社会 / 人文", name: "Lex Fridman", min_duration: 1800 },
+      { id: "UCSHZKyawb77ixDdsGog4iWA", type: "channel", category: "文化 / 社会 / 人文", name: "Lex Fridman", min_duration: 1800 },
       { id: "PL959yNJGO7n6ut_Lf717t4LFoswMxl7lL", type: "playlist", category: "文化 / 社会 / 人文", name: "Cannonball with Wesley Morris" },
       { id: "PLwa5nQCz20BRS5qYQ_D2NNQIpdSvYCMUV", type: "playlist", category: "文化 / 社会 / 人文", name: "Revisionist History" },
     ]
   },
   "youtube-all": {
     sources: [
-      { id: "UCSej6W5W-4PDFsZBif0tYFw", type: "channel", category: "科技 / AI / VC", name: "Sequoia Capital" },
-      { id: "UCz4St9qG3OAGseWpTwjH6KQ", type: "channel", category: "科技 / AI / VC", name: "No Priors Podcast" },
+      { id: "UCWrF0oN6unbXrWsTN7RctTw", type: "channel", category: "科技 / AI / VC", name: "Sequoia Capital" },
+      { id: "UCSI7h9hydQ40K5MJHnCrQvw", type: "channel", category: "科技 / AI / VC", name: "No Priors Podcast" },
       { id: "PLOXw6I10VTv9GAOCZjUAAkSVyW2cDXs4u", type: "playlist", category: "科技 / AI / VC", name: "The OpenAI Podcast" },
       { id: "PLd7-bHaQwnthaNDpZ32TtYONGVk95-fhF", type: "playlist", category: "科技 / AI / VC", name: "Dwarkesh Podcast" },
-      { id: "UCVYWDY9x8h4wQ7P57rBcnTA", type: "channel", category: "科技 / AI / VC", name: "Bg2 Pod" },
-      { id: "UCUMZ7gohrM67iV2gcb6HV6w", type: "channel", category: "商业 / 财经 / 投资", name: "Bloomberg Originals" },
+      { id: "UC-yRDvpR99LUc5l7i7jLzew", type: "channel", category: "科技 / AI / VC", name: "Bg2 Pod" },
+      { id: "UCUMZ7gohGI9HcU9VNsr2FJQ", type: "channel", category: "商业 / 财经 / 投资", name: "Bloomberg Originals" },
       { id: "PLe4PRejZgr0NHEFdRxaup9ClCBvX335Xl", type: "playlist", category: "商业 / 财经 / 投资", name: "Masters in Business" },
       { id: "PLjZkFWu3rWSE2cZ8L2CbiRMmHtJeF0kHh", type: "playlist", category: "商业 / 财经 / 投资", name: "Acquired Podcast Full Episodes" },
-      { id: "UCjS5j8YpRJ4rWMyPw-1S6yg", type: "channel", category: "产品 / 创业 / 管理", name: "Lenny's Podcast" },
+      { id: "UC6t1O76G0jYXOAoYCm153dA", type: "channel", category: "产品 / 创业 / 管理", name: "Lenny's Podcast" },
       { id: "PLdMrbgYfVl-s16D_iT2BJCJ90pWtTO1A4", type: "playlist", category: "新闻 / 时评 / 全球议题", name: "The Daily" },
-      { id: "UCshZoyx6GEwR8mQXc4MlYrA", type: "channel", category: "文化 / 社会 / 人文", name: "Lex Fridman", min_duration: 1800 },
+      { id: "UCSHZKyawb77ixDdsGog4iWA", type: "channel", category: "文化 / 社会 / 人文", name: "Lex Fridman", min_duration: 1800 },
     ]
   }
 };
@@ -511,10 +517,24 @@ async function processDailyCollection(
       return;
     }
 
-    // Get video details
+    // Get video details (needed for duration — used to filter Shorts)
     const videoIds = filteredVideos.map(v => v.videoId);
     const videoDetails = await getVideoDetails(videoIds);
     console.log(`Got details for ${Object.keys(videoDetails).length} videos`);
+
+    // Drop YouTube Shorts: videos whose actual duration <= SHORTS_MAX_SECONDS.
+    // The YouTube Data API uploads playlist includes Shorts alongside regular
+    // uploads. The /videos tab on youtube.com suppresses Shorts, but the API
+    // does not. Filtering by duration is the only reliable client-side approach.
+    const nonShortVideos = filteredVideos.filter(v => {
+      const duration = videoDetails[v.videoId]?.duration ?? 0;
+      const isShort = duration > 0 && duration <= SHORTS_MAX_SECONDS;
+      if (isShort) {
+        console.log(`  DROP Shorts: ${v.videoId} (${duration}s) - ${(videoDetails[v.videoId]?.title || "").slice(0, 50)}`);
+      }
+      return !isShort;
+    });
+    console.log(`After Shorts filter: ${nonShortVideos.length} videos (dropped ${filteredVideos.length - nonShortVideos.length} Shorts)`);
 
     // Process each video
     const dailyItems: any[] = [];
@@ -522,8 +542,8 @@ async function processDailyCollection(
     let processed = 0;
     let failed = 0;
 
-    for (let i = 0; i < filteredVideos.length; i++) {
-      const video = filteredVideos[i];
+    for (let i = 0; i < nonShortVideos.length; i++) {
+      const video = nonShortVideos[i];
       const videoId = video.videoId;
       const details = videoDetails[videoId] || {};
       const duration = details.duration || 0;
@@ -641,10 +661,11 @@ async function processDailyCollection(
       window_start: windowStart,
       window_end: windowEnd,
       sources_profile: profile,
-      total_videos: filteredVideos.length,
+      total_videos: nonShortVideos.length,
       videos_with_transcripts: processed,
       videos_failed: failed,
-      coverage_ratio: filteredVideos.length > 0 ? processed / filteredVideos.length : 0,
+      shorts_dropped: filteredVideos.length - nonShortVideos.length,
+      coverage_ratio: nonShortVideos.length > 0 ? processed / nonShortVideos.length : 0,
       processed_at: new Date().toISOString(),
     };
 
